@@ -1,0 +1,12 @@
+import { CircleAlert, CircleCheck, CreditCard, WalletCards } from "lucide-react";
+import type { Metadata } from "next";
+
+import { AnalyticsDetail } from "@/components/analytics";
+import { analyticsSummary, customers, invoices } from "@/lib/mock-data";
+import { formatDate, formatINR } from "@/lib/utils";
+
+export const metadata: Metadata = { title: "Payment analytics" };
+
+export default function PaymentAnalyticsPage() {
+  return <AnalyticsDetail title="Payment analytics" description="Monitor collection efficiency, overdue exposure, and how customers prefer to pay." sectionLabel="Payments" stats={[{ label: "Collected", value: formatINR(analyticsSummary.collectedAmount), change: 9.8, icon: CircleCheck, tone: "success" }, { label: "Outstanding", value: formatINR(analyticsSummary.outstandingAmount), change: -4.6, icon: WalletCards, tone: "warning" }, { label: "Overdue", value: formatINR(invoices.filter((invoice) => invoice.status === "overdue").reduce((sum, invoice) => sum + invoice.balanceDue, 0)), icon: CircleAlert, tone: "danger" }, { label: "Collection rate", value: `${Math.round((analyticsSummary.collectedAmount / analyticsSummary.grossSales) * 100)}%`, change: 4.1, icon: CreditCard, tone: "info" }]} chartTitle="Collection trend" chartDescription="Collected amount compared with outstanding balances" chartData={[{ label: "Week 1", primary: 2100, secondary: 1498 }, { label: "Week 2", primary: 0, secondary: 3598 }, { label: "Week 3", primary: 3297, secondary: 0 }, { label: "Week 4", primary: 3196, secondary: 3292 }]} tableTitle="Invoice collection performance" tableDescription="Open balances and due dates by customer." rows={invoices.map((invoice) => ({ id: invoice.id, invoice: invoice.invoiceNumber, customer: customers.find((customer) => customer.id === invoice.customerId)?.fullName ?? "Unknown", total: invoice.total, paid: invoice.amountPaid, balance: invoice.balanceDue, dueDate: formatDate(invoice.dueDate), status: invoice.status }))} columns={[{ key: "invoice", label: "Invoice", priority: "primary" }, { key: "customer", label: "Customer" }, { key: "total", label: "Total", format: "currency", align: "right" }, { key: "paid", label: "Paid", format: "currency", align: "right" }, { key: "balance", label: "Balance", format: "currency", align: "right" }, { key: "dueDate", label: "Due date" }, { key: "status", label: "Status", format: "status" }]} searchKeys={["invoice", "customer"]} />;
+}

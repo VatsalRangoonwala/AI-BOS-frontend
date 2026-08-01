@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI-BOS — AI Business Operating System
 
-## Getting Started
+AI-BOS is a complete frontend prototype for an AI-assisted business management SaaS. It is designed for Indian small and medium-sized retailers and connects customers, products, inventory, invoices, orders, payments, analytics, notifications, subscriptions, team settings, and an AI business assistant through one consistent mock dataset.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 App Router and React 19
+- TypeScript in strict mode
+- Tailwind CSS 4 with semantic light/dark design tokens
+- Radix UI primitives for focus-managed dialogs, sheets, menus, selects, and tabs
+- Lucide icons and Recharts
+- React Hook Form with Zod validation
+
+This repository is frontend-only. Razorpay, WhatsApp, email, AI, authentication, storage, and database experiences are polished simulations with no real external connection or secret.
+
+## Run locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Quality checks:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run type-check
+npm run lint
+npm run build
+```
 
-## Learn More
+## Application areas
 
-To learn more about Next.js, take a look at the following resources:
+- Marketing: landing, features, pricing, about, contact, privacy, and terms
+- Authentication: login, registration, verification, OTP, forgot/reset password
+- Onboarding: a validated five-step business setup wizard
+- Business workspace: dashboard, AI assistant, customers, products, inventory, invoices, orders, payments, analytics, notifications, subscription, settings, help, and support
+- Platform administration: users, businesses, subscriptions, revenue, and mock system health
+- System states: offline, maintenance, permission/session/subscription expiry, AI limit, 404, and generic errors
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The canonical assistant URL is `/ai-assistant`; `/assistant` remains as a permanent compatibility redirect.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project structure
 
-## Deploy on Vercel
+```text
+src/
+  app/
+    (marketing)/     public product pages
+    (auth)/          authentication flows
+    (onboarding)/    business setup
+    (dashboard)/     authenticated business workspace
+    (system)/        standalone application states
+    admin/           platform-administrator portal
+  components/
+    ui/              accessible design-system primitives
+    layout/          responsive shells and navigation
+    ai/              conversational assistant
+    <feature>/       domain-specific reusable components
+  lib/
+    mock-data/       connected business fixtures
+    services/        delayed success/empty/failure mock services
+  types/             shared business-domain models
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Pages are Server Components by default. Client boundaries are used for interaction-heavy pieces such as forms, filters, builders, charts, dialogs, toasts, navigation state, and chat.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Demo notes
+
+- Use the state selector in the AI Assistant header to preview ready, offline, usage-limit, and failed-request experiences.
+- Login accepts the normal mock path and includes controls for invalid, locked, and unverified states.
+- Financial, cancellation, reminder, stock, and destructive actions show confirmations and frontend feedback.
+- Mock records intentionally share IDs so customer ledgers, invoices, orders, payments, and inventory views stay consistent.
