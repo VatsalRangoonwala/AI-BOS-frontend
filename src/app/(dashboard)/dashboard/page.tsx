@@ -2,8 +2,6 @@ import {
   AlertTriangle,
   ArrowRight,
   Boxes,
-  CalendarDays,
-  Download,
   FilePlus2,
   IndianRupee,
   Package,
@@ -19,10 +17,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { RevenueChart } from "@/components/charts";
-import { AIInsightActions, ReminderButton } from "@/components/dashboard/dashboard-actions";
-import { ChartCard, PageHeader, StatCard, StatusBadge } from "@/components/shared";
+import { AIInsightActions, DashboardHeader, ReminderButton } from "@/components/dashboard/dashboard-actions";
+import { ChartCard, StatCard, StatusBadge } from "@/components/shared";
 import { Badge, buttonStyles, Card, CardContent, CardHeader, CardTitle, CurrencyDisplay } from "@/components/ui";
-import { analyticsSummary, currentBusiness, customers, dashboardMetrics, invoices, orders, products } from "@/lib/mock-data";
+import { analyticsSummary, customers, dashboardMetrics, invoices, orders, products } from "@/lib/mock-data";
 import { formatDate, formatINR } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -45,20 +43,7 @@ export default function DashboardPage() {
 
   return (
     <div className="app-page-enter space-y-6 lg:space-y-8">
-      <PageHeader
-        eyebrow="Saturday, 1 August"
-        title="Good evening, Vikram"
-        description={`Here’s what is happening at ${currentBusiness.name} today.`}
-        actions={[
-          { label: "Export report", href: "/analytics", icon: Download, variant: "outline" },
-          { label: "Create invoice", href: "/invoices/new", icon: FilePlus2 },
-        ]}
-      >
-        <button type="button" className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border-strong bg-card px-3 text-sm font-semibold text-foreground hover:bg-muted">
-          <CalendarDays className="size-4 text-muted-foreground" />
-          Last 30 days
-        </button>
-      </PageHeader>
+      <DashboardHeader />
 
       <section aria-label="Business overview" className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         <StatCard label="Today’s sales" value={formatINR(dashboardMetrics.todaySales)} change={dashboardMetrics.comparisons.todaySales} comparison="vs yesterday" icon={IndianRupee} sparkline={[3, 5, 4, 8, 6, 10, 12]} />

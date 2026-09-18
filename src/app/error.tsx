@@ -2,7 +2,6 @@
 
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
-import { useEffect } from "react";
 
 import { StandaloneFrame, SystemState } from "@/components/system";
 import { Button, buttonStyles } from "@/components/ui";
@@ -14,10 +13,6 @@ export default function ErrorBoundary({
   error: Error & { digest?: string };
   unstable_retry: () => void;
 }) {
-  useEffect(() => {
-    console.error(error);
-  }, [error]);
-
   return (
     <StandaloneFrame>
       <SystemState

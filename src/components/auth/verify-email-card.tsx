@@ -3,7 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Mail, Pencil, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -11,6 +12,7 @@ import { AuthStatusAlert } from "@/components/auth/auth-status-alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { apiClient } from "@/lib/api-client";
 
 const emailSchema = z.object({
   email: z.string().trim().min(1, "Enter your email address.").email("Enter a valid email address."),
@@ -20,11 +22,24 @@ type EmailValues = z.infer<typeof emailSchema>;
 type VerificationState = "pending" | "expired" | "success";
 
 export function VerifyEmailCard() {
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+  const emailParam = searchParams.get("email");
+
   const [state, setState] = useState<VerificationState>("pending");
-  const [email, setEmail] = useState("vikram@sharmamobile.in");
+  const [email, setEmail] = useState(emailParam || "");
   const [changingEmail, setChangingEmail] = useState(false);
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
+
+  useEffect(() => {
+    if (!token) return;
+    apiClient.auth
+      .verifyEmail(token)
+      .then(() => setState("success"))
+      .catch(() => setState("expired"));
+  }, [token]);
+
   const {
     register,
     handleSubmit,

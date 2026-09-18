@@ -14,6 +14,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
+import { useAuthStore } from "@/lib/stores/auth-store";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ApiError } from "@/lib/api-client";
+
 const loginSchema = z.object({
   email: z.string().trim().min(1, "Enter your email address.").email("Enter a valid email address."),
   password: z.string().min(1, "Enter your password."),
@@ -24,44 +28,60 @@ type LoginValues = z.infer<typeof loginSchema>;
 type LoginResult = "idle" | "invalid" | "locked" | "unverified" | "success";
 
 export function LoginForm() {
+  const login = useAuthStore((s) => s.login);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get("redirect");
+  const targetRedirect =
+    redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
+      ? redirectParam
+      : "/dashboard";
+
   const [result, setResult] = useState<LoginResult>("idle");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "", remember: true },
+    defaultValues: { email: "", password: "", remember: false },
   });
 
   async function onSubmit(values: LoginValues) {
     setResult("idle");
-    await new Promise((resolve) => window.setTimeout(resolve, 750));
+    setErrorMessage(null);
 
-    const email = values.email.toLowerCase();
-    if (email.startsWith("locked")) {
-      setResult("locked");
-    } else if (email.startsWith("unverified")) {
-      setResult("unverified");
-    } else if (email.startsWith("wrong") || values.password !== "Demo@123") {
-      setResult("invalid");
-    } else {
+    try {
+      await login({ email: values.email, password: values.password });
       setResult("success");
+      router.push(targetRedirect);
+    } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          setResult("invalid");
+        } else if (err.status === 403) {
+          setResult("locked");
+          setErrorMessage(err.message || "Account is suspended or locked.");
+        } else if (err.status === 429) {
+          setResult("locked");
+          setErrorMessage("Too many login attempts. Please wait a minute and try again.");
+        } else {
+          setResult("invalid");
+          setErrorMessage(err.message || "Email or password is incorrect.");
+        }
+      } else {
+        setResult("invalid");
+        setErrorMessage("An unexpected error occurred. Please try again.");
+      }
     }
-  }
-
-  function applyDemo(email: string, password = "Demo@123") {
-    setValue("email", email, { shouldValidate: true });
-    setValue("password", password, { shouldValidate: true });
-    setResult("idle");
   }
 
   if (result === "success") {
     return (
       <div className="space-y-5">
         <AuthStatusAlert variant="success" title="You’re signed in">
-          The demo session is ready for Sharma Mobile & Electronics.
+          Your session is active and ready.
         </AuthStatusAlert>
         <Button asChild block size="lg" className="rounded-xl">
           <Link href="/dashboard">
@@ -79,13 +99,13 @@ export function LoginForm() {
   return (
     <form className="space-y-5" noValidate onSubmit={handleSubmit(onSubmit)}>
       {result === "invalid" ? (
-        <AuthStatusAlert variant="error" title="Email or password is incorrect">
-          Check both fields and try again. Demo password: <strong>Demo@123</strong>.
+        <AuthStatusAlert variant="error" title="Sign in failed">
+          {errorMessage || "Email or password is incorrect. Check both fields and try again."}
         </AuthStatusAlert>
       ) : null}
       {result === "locked" ? (
-        <AuthStatusAlert variant="warning" title="This account is temporarily locked">
-          Too many unsuccessful attempts were recorded. Wait 15 minutes or contact support.
+        <AuthStatusAlert variant="warning" title="Account issue">
+          {errorMessage || "Too many unsuccessful attempts were recorded. Please try again later."}
         </AuthStatusAlert>
       ) : null}
       {result === "unverified" ? (
@@ -132,24 +152,6 @@ export function LoginForm() {
       <Button block size="lg" type="submit" className="rounded-xl" isLoading={isSubmitting} loadingText="Signing in…" trailingIcon={LogIn}>
         Sign in
       </Button>
-
-      <details className="rounded-xl border border-border bg-muted/40 p-3 text-xs">
-        <summary className="min-h-8 cursor-pointer font-semibold text-muted-foreground">Demo sign-in states</summary>
-        <div className="mt-3 grid gap-2 sm:grid-cols-3">
-          <DemoButton label="Successful" onClick={() => applyDemo("owner@demo.ai-bos.in")} />
-          <DemoButton label="Unverified" onClick={() => applyDemo("unverified@demo.ai-bos.in")} />
-          <DemoButton label="Locked" onClick={() => applyDemo("locked@demo.ai-bos.in")} />
-        </div>
-        <p className="mt-2 text-muted-foreground">All states use the mock password Demo@123.</p>
-      </details>
     </form>
-  );
-}
-
-function DemoButton({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button type="button" onClick={onClick} className="min-h-9 rounded-lg border border-border bg-card px-2 font-semibold text-foreground hover:bg-muted">
-      {label}
-    </button>
   );
 }

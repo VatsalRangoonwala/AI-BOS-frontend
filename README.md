@@ -10,8 +10,15 @@ AI-BOS is a complete frontend prototype for an AI-assisted business management S
 - Radix UI primitives for focus-managed dialogs, sheets, menus, selects, and tabs
 - Lucide icons and Recharts
 - React Hook Form with Zod validation
+- Zustand for high-performance client state (drafts, scenario controls, workspace)
+- TanStack Query for server state caching and background revalidation
+- TanStack Table for headless, accessible data tables
+- Nuqs for type-safe URL search parameter state
+- Vitest and React Testing Library for fast, isolated unit and component tests
 
-This repository is frontend-only. Razorpay, WhatsApp, email, AI, authentication, storage, and database experiences are polished simulations with no real external connection or secret.
+This repository is frontend-only. Most business workflows remain polished simulations backed by the shared mock dataset. Razorpay, WhatsApp, email, AI, storage, and database experiences have no real external connection or secret.
+
+Authentication and business/team settings are integration-ready through a same-origin backend-for-frontend route. The route stores access and refresh tokens only in HTTP-only, secure production cookies; browser JavaScript never reads them. Configure `NEXT_PUBLIC_API_URL` (server-only) before using those flows. The backend remains responsible for token issuance, refresh, authorization, tenant membership, rate limiting, and audit logging.
 
 ## Run locally
 
@@ -27,8 +34,20 @@ Quality checks:
 ```bash
 npm run type-check
 npm run lint
+npm run test
 npm run build
+# Or run all quality gates at once:
+npm run check
 ```
+
+Use Node.js 20.9+ (Node 20 LTS is recommended). CI runs the same checks on every pull request and push to `main`.
+
+## Deployment prerequisites
+
+- Set `NEXT_PUBLIC_APP_URL` to the public HTTPS application origin.
+- Set `NEXT_PUBLIC_API_URL` to the HTTPS backend origin. Do not set an API URL in `NEXT_PUBLIC_*` for production.
+- Configure the backend to return the documented JSON envelopes and enforce authorization and tenant isolation for every request.
+- Keep all other workflow buttons in demo mode until their backend APIs, server-side validation, authorization, and audit trails are implemented.
 
 ## Application areas
 

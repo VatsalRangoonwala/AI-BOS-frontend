@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-
 export default function GlobalError({
   error,
   unstable_retry,
@@ -9,10 +7,6 @@ export default function GlobalError({
   error: Error & { digest?: string };
   unstable_retry: () => void;
 }) {
-  useEffect(() => {
-    console.error(error);
-  }, [error]);
-
   return (
     <html lang="en-IN">
       <body style={{ margin: 0, background: "#f7f8fc", color: "#172033", fontFamily: "Arial, sans-serif" }}>

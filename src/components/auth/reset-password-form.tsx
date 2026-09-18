@@ -22,10 +22,16 @@ const resetSchema = z
     message: "Passwords do not match.",
   });
 
+import { useSearchParams } from "next/navigation";
+import { apiClient, ApiError } from "@/lib/api-client";
+
 type ResetValues = z.infer<typeof resetSchema>;
 
 export function ResetPasswordForm() {
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token") || "";
   const [state, setState] = useState<"form" | "success" | "expired">("form");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -34,9 +40,27 @@ export function ResetPasswordForm() {
   } = useForm<ResetValues>({ resolver: zodResolver(resetSchema), defaultValues: { password: "", confirmPassword: "" } });
   const password = useWatch({ control, name: "password" });
 
-  async function onSubmit() {
-    await new Promise((resolve) => window.setTimeout(resolve, 750));
-    setState("success");
+  async function onSubmit(values: ResetValues) {
+    if (!token) {
+      setErrorMessage("No reset token provided in the link. Please request a new password reset link.");
+      return;
+    }
+    setErrorMessage(null);
+    try {
+      await apiClient.auth.resetPassword({
+        token,
+        newPassword: values.password,
+      });
+      setState("success");
+    } catch (err: unknown) {
+      if (err instanceof ApiError && (err.code === "invalid_token" || err.status === 400)) {
+        setState("expired");
+      } else if (err instanceof ApiError) {
+        setErrorMessage(err.message || "Failed to update password.");
+      } else {
+        setErrorMessage("An unexpected error occurred. Please try again.");
+      }
+    }
   }
 
   if (state === "success") {
@@ -66,6 +90,11 @@ export function ResetPasswordForm() {
 
   return (
     <form className="space-y-5" noValidate onSubmit={handleSubmit(onSubmit)}>
+      {errorMessage ? (
+        <AuthStatusAlert variant="error" title="Reset password error">
+          {errorMessage}
+        </AuthStatusAlert>
+      ) : null}
       <Field>
         <FieldLabel htmlFor="reset-password" required>New password</FieldLabel>
         <PasswordInput id="reset-password" autoComplete="new-password" placeholder="Create a new password" invalid={Boolean(errors.password)} aria-describedby={errors.password ? "reset-password-error" : "reset-password-help"} {...register("password")} />

@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
 import { CloudCheck } from "lucide-react";
 import Link from "next/link";
+import { connection } from "next/server";
 
 import { Logo } from "@/components/logo";
+import { AuthGuard } from "@/components/providers/auth-guard";
 
 export const metadata: Metadata = {
   title: "Business setup",
   robots: { index: false, follow: false },
 };
 
-export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
+export default async function OnboardingLayout({ children }: { children: React.ReactNode }) {
+  await connection();
+
   return (
-    <div className="min-h-screen bg-background">
+    <AuthGuard><div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex h-18 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
@@ -33,7 +37,6 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8" id="main-content">
         {children}
       </main>
-    </div>
+    </div></AuthGuard>
   );
 }
-

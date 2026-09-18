@@ -69,6 +69,9 @@ const planDetails: Record<
   },
 };
 
+import { useAuthStore } from "@/lib/stores/auth-store";
+import { ApiError } from "@/lib/api-client";
+
 export function RegisterForm({
   plan = "free",
   billing = "monthly",
@@ -76,7 +79,9 @@ export function RegisterForm({
   plan?: RegistrationPlan;
   billing?: RegistrationBilling;
 }) {
+  const registerUser = useAuthStore((s) => s.register);
   const [accountExists, setAccountExists] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
   const selection = planDetails[plan];
   const {
@@ -103,27 +108,41 @@ export function RegisterForm({
 
   async function onSubmit(values: RegisterValues) {
     setAccountExists(false);
-    await new Promise((resolve) => window.setTimeout(resolve, 800));
+    setErrorMessage(null);
 
-    if (values.email.toLowerCase().startsWith("existing")) {
-      setAccountExists(true);
-      return;
+    try {
+      await registerUser({
+        email: values.email,
+        password: values.password,
+        fullName: values.fullName,
+        mobile: values.mobile,
+        businessName: values.businessName,
+      });
+      setRegisteredEmail(values.email);
+    } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        if (err.status === 409 || err.code === "user_already_exists") {
+          setAccountExists(true);
+        } else {
+          setErrorMessage(err.message || "Failed to create account. Please check your information.");
+        }
+      } else {
+        setErrorMessage("An unexpected error occurred. Please try again.");
+      }
     }
-
-    setRegisteredEmail(values.email);
   }
 
   if (registeredEmail) {
     return (
       <div className="space-y-5">
         <AuthStatusAlert variant="success" title="Your account is ready to verify">
-          A verification link was sent to <strong>{registeredEmail}</strong>. The demo does not send a real email.
-          <span className="mt-2 block">
-            {selection.label} with {billing} billing remains selected for setup.
+          A verification link was sent to <strong>{registeredEmail}</strong>. Please check your inbox and confirm your address to complete setup.
+          <span className="mt-2 block text-xs text-muted-foreground">
+            {selection.label} with {billing} billing remains selected for your workspace.
           </span>
         </AuthStatusAlert>
         <Button asChild block size="lg" className="rounded-xl">
-          <Link href={`/verify-email?plan=${plan}&billing=${billing}`}>
+          <Link href={`/verify-email?email=${encodeURIComponent(registeredEmail)}&plan=${plan}&billing=${billing}`}>
             Continue to verification
             <ArrowRight className="size-4" aria-hidden="true" />
           </Link>
@@ -161,6 +180,12 @@ export function RegisterForm({
       {accountExists ? (
         <AuthStatusAlert variant="error" title="An account already uses this email">
           Sign in instead, or use the password reset flow if you cannot access it.
+        </AuthStatusAlert>
+      ) : null}
+
+      {errorMessage ? (
+        <AuthStatusAlert variant="error" title="Registration error">
+          {errorMessage}
         </AuthStatusAlert>
       ) : null}
 

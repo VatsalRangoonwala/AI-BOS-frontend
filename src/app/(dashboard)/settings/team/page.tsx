@@ -1,13 +1,8 @@
-import { Crown, Mail, ShieldCheck, UserPlus } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
-
-import { Badge, buttonStyles, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-import { teamMembers } from "@/lib/mock-data";
-import { formatDate, getInitials } from "@/lib/utils";
+import { TeamSettingsView } from "@/components/settings/team-settings-view";
 
 export const metadata: Metadata = { title: "Team settings" };
 
 export default function TeamSettingsPage() {
-  return <div className="space-y-5"><Card className="border-warning/25 bg-warning-soft/35"><CardContent className="flex flex-col gap-4 pt-5 sm:flex-row sm:items-center"><span className="grid size-12 shrink-0 place-items-center rounded-xl bg-warning text-warning-foreground"><Crown className="size-5" /></span><div className="min-w-0 flex-1"><h2 className="font-semibold">Team controls require Premium</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">Your existing members remain visible. Upgrade to invite, remove, deactivate or change permissions.</p></div><Link href="/subscription/plans" className={buttonStyles()}>Upgrade plan</Link></CardContent></Card><Card><CardHeader className="flex-row items-center justify-between"><div><CardTitle>Team members</CardTitle><p className="mt-1 text-sm text-muted-foreground">2 of 3 Pro seats are currently active</p></div><button type="button" disabled className={buttonStyles({ className: "opacity-50" })}><UserPlus className="size-4" />Invite member</button></CardHeader><CardContent className="space-y-3">{teamMembers.map((member) => <article key={member.id} className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:flex-row sm:items-center"><span className="grid size-10 place-items-center rounded-full bg-primary-soft text-sm font-bold text-primary">{getInitials(member.fullName)}</span><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><p className="font-semibold">{member.fullName}</p>{member.role === "business_owner" ? <ShieldCheck className="size-4 text-primary" aria-label="Business owner" /> : null}</div><p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><Mail className="size-3" />{member.email}</p></div><div className="sm:text-right"><Badge variant={member.status === "active" ? "success" : "warning"}>{member.status === "active" ? "Active" : "Invitation pending"}</Badge><p className="mt-1 text-xs capitalize text-muted-foreground">{member.role.replaceAll("_", " ")}{member.joinedAt ? ` · joined ${formatDate(member.joinedAt, { month: "short", year: "numeric" })}` : ""}</p></div></article>)}</CardContent></Card></div>;
+  return <TeamSettingsView />;
 }

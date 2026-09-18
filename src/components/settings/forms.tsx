@@ -20,6 +20,7 @@ import { z } from "zod";
 
 import { useTheme } from "@/components/providers/theme-provider";
 import { useToast } from "@/components/providers/toast-provider";
+import { apiClient } from "@/lib/api-client";
 import {
   Button,
   Card,
@@ -176,7 +177,15 @@ const businessSchema = z.object({
 
 type BusinessValues = z.infer<typeof businessSchema>;
 
-export function BusinessForm({ defaults }: { defaults: BusinessValues }) {
+export function BusinessForm({
+  defaults,
+  businessId,
+  onSave,
+}: {
+  defaults: BusinessValues;
+  businessId?: string;
+  onSave?: (updated: BusinessValues) => void;
+}) {
   const { toast } = useToast();
   const {
     register,
@@ -186,13 +195,31 @@ export function BusinessForm({ defaults }: { defaults: BusinessValues }) {
     resolver: zodResolver(businessSchema),
     defaultValues: defaults,
   });
-  const submit = async () => {
-    await new Promise((resolve) => window.setTimeout(resolve, 600));
-    toast({
-      title: "Business settings saved",
-      description: "New invoices will use the updated defaults.",
-      variant: "success",
-    });
+  const submit = async (values: BusinessValues) => {
+    try {
+      if (businessId) {
+        await apiClient.businesses.update(businessId, {
+          name: values.name,
+          phone: values.mobile,
+          address: values.address,
+          invoicePrefix: values.prefix,
+        });
+      } else {
+        await new Promise((resolve) => window.setTimeout(resolve, 600));
+      }
+      onSave?.(values);
+      toast({
+        title: "Business settings saved",
+        description: "New invoices will use the updated defaults.",
+        variant: "success",
+      });
+    } catch (err: unknown) {
+      toast({
+        title: "Failed to update business",
+        description: err instanceof Error ? err.message : "Could not save changes.",
+        variant: "error",
+      });
+    }
   };
 
   return (

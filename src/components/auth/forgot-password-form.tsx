@@ -18,9 +18,12 @@ const forgotSchema = z.object({
 
 type ForgotValues = z.infer<typeof forgotSchema>;
 
+import { apiClient } from "@/lib/api-client";
+
 export function ForgotPasswordForm() {
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -29,19 +32,22 @@ export function ForgotPasswordForm() {
 
   async function onSubmit(values: ForgotValues) {
     setFailed(false);
-    await new Promise((resolve) => window.setTimeout(resolve, 700));
-    if (values.email.toLowerCase().startsWith("error")) {
+    setErrorMessage(null);
+    try {
+      await apiClient.auth.forgotPassword(values.email);
+      setSentTo(values.email);
+    } catch (err: unknown) {
       setFailed(true);
-      return;
+      const message = err instanceof Error ? err.message : "Failed to start password reset.";
+      setErrorMessage(message);
     }
-    setSentTo(values.email);
   }
 
   if (sentTo) {
     return (
       <div className="space-y-5">
         <AuthStatusAlert variant="success" title="Check your inbox">
-          If an AI-BOS account exists for <strong>{sentTo}</strong>, a reset link is on its way. This demo does not send real email.
+          If an AI-BOS account exists for <strong>{sentTo}</strong>, a password reset link has been dispatched to your email address.
         </AuthStatusAlert>
         <div className="rounded-xl border border-border bg-muted/45 p-4 text-xs leading-6 text-muted-foreground">
           The link expires after 30 minutes. Check spam or promotions before requesting another one.
@@ -60,7 +66,7 @@ export function ForgotPasswordForm() {
     <form className="space-y-5" noValidate onSubmit={handleSubmit(onSubmit)}>
       {failed ? (
         <AuthStatusAlert variant="error" title="We could not start the reset">
-          A temporary mock error occurred. Try again, or use another email address.
+          {errorMessage || "An error occurred. Try again, or use another email address."}
         </AuthStatusAlert>
       ) : null}
       <Field>

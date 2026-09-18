@@ -15,11 +15,12 @@ import {
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 import { Logo } from "@/components/logo";
 import { GlobalSearch as ConnectedGlobalSearch } from "@/components/layout/global-search";
 import { navigationCounts } from "@/lib/navigation";
+import { useAuthStore } from "@/lib/stores/auth-store";
 
 type AppHeaderProps = {
   onOpenMobileMenu: () => void;
@@ -30,10 +31,13 @@ const dropdownContentClass =
 const dropdownItemClass =
   "flex min-h-11 cursor-pointer select-none items-center gap-3 rounded-xl px-3 text-sm outline-none transition-colors data-[highlighted]:bg-surface-muted data-[highlighted]:text-foreground";
 
-const businesses = ["Sharma Mobile & Electronics", "Mehta Mobile Hub"];
-
 export function BusinessSwitcher() {
-  const [business, setBusiness] = useState(businesses[0]);
+  const memberships = useAuthStore((s) => s.memberships);
+  const activeBusiness = useAuthStore((s) => s.activeBusiness);
+  const switchBusiness = useAuthStore((s) => s.switchBusiness);
+  const currentName =
+    activeBusiness?.businessName ||
+    (memberships.length > 0 ? memberships[0].businessName : "Workspace");
 
   return (
     <DropdownMenu.Root>
@@ -41,13 +45,13 @@ export function BusinessSwitcher() {
         <button
           type="button"
           className="hidden min-h-11 min-w-0 max-w-52 items-center gap-2 rounded-xl border border-border bg-card px-2.5 text-left transition-colors hover:bg-surface-muted lg:flex"
-          aria-label={`Switch business, currently ${business}`}
+          aria-label={`Switch business, currently ${currentName}`}
         >
           <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-secondary-soft text-secondary">
             <Building2 className="size-4" aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-xs font-semibold text-foreground">{business}</span>
+            <span className="block truncate text-xs font-semibold text-foreground">{currentName}</span>
             <span className="block truncate text-[0.68rem] text-muted-foreground">Business workspace</span>
           </span>
           <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
@@ -58,23 +62,29 @@ export function BusinessSwitcher() {
           <DropdownMenu.Label className="px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             Your businesses
           </DropdownMenu.Label>
-          {businesses.map((name) => (
-            <DropdownMenu.Item
-              className={dropdownItemClass}
-              onSelect={() => setBusiness(name)}
-              key={name}
-            >
-              <span className="grid size-8 place-items-center rounded-lg bg-secondary-soft text-xs font-bold text-secondary">
-                {name
-                  .split(" ")
-                  .map((word) => word[0])
-                  .slice(0, 2)
-                  .join("")}
-              </span>
-              <span className="flex-1 font-medium">{name}</span>
-              {business === name ? <Check className="size-4 text-primary" aria-label="Selected" /> : null}
+          {memberships.length > 0 ? (
+            memberships.map((m) => (
+              <DropdownMenu.Item
+                className={dropdownItemClass}
+                onSelect={() => switchBusiness(m.businessId)}
+                key={m.businessId}
+              >
+                <span className="grid size-8 place-items-center rounded-lg bg-secondary-soft text-xs font-bold text-secondary">
+                  {m.businessName
+                    .split(" ")
+                    .map((word) => word[0])
+                    .slice(0, 2)
+                    .join("")}
+                </span>
+                <span className="flex-1 font-medium">{m.businessName}</span>
+                {activeBusiness?.businessId === m.businessId ? <Check className="size-4 text-primary" aria-label="Selected" /> : null}
+              </DropdownMenu.Item>
+            ))
+          ) : (
+            <DropdownMenu.Item className={dropdownItemClass} disabled>
+              <span className="flex-1 font-medium text-muted-foreground">{currentName}</span>
             </DropdownMenu.Item>
-          ))}
+          )}
           <DropdownMenu.Separator className="my-1 h-px bg-border" />
           <DropdownMenu.Item asChild className={dropdownItemClass}>
             <Link href="/settings/business">
@@ -145,18 +155,42 @@ export function NotificationMenu() {
 }
 
 export function UserMenu() {
+  const user = useAuthStore((s) => s.user);
+  const activeBusiness = useAuthStore((s) => s.activeBusiness);
+  const logout = useAuthStore((s) => s.logout);
+  const displayName = user?.fullName || "Account";
+  const displayEmail = user?.email || "";
+  const displayRole =
+    activeBusiness?.role === "owner"
+      ? "Owner"
+      : activeBusiness?.role === "admin"
+        ? "Admin"
+        : activeBusiness?.role === "staff"
+          ? "Staff"
+          : "Member";
+  const initials =
+    displayName
+      .split(" ")
+      .map((part) => part[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "A";
+
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
           type="button"
           className="flex min-h-11 items-center gap-2 rounded-xl px-1.5 text-left transition-colors hover:bg-surface-muted"
-          aria-label="Open profile menu for Vikram Sharma"
+          aria-label={`Open profile menu for ${displayName}`}
         >
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">VS</span>
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+            {initials}
+          </span>
           <span className="hidden min-w-0 2xl:block">
-            <span className="block truncate text-xs font-semibold">Vikram Sharma</span>
-            <span className="block text-[0.68rem] text-muted-foreground">Owner</span>
+            <span className="block truncate text-xs font-semibold">{displayName}</span>
+            <span className="block text-[0.68rem] text-muted-foreground">{displayRole}</span>
           </span>
           <ChevronDown className="hidden size-4 text-muted-foreground 2xl:block" aria-hidden="true" />
         </button>
@@ -164,22 +198,35 @@ export function UserMenu() {
       <DropdownMenu.Portal>
         <DropdownMenu.Content align="end" sideOffset={8} className={dropdownContentClass}>
           <DropdownMenu.Label className="px-3 py-2">
-            <span className="block text-sm font-semibold">Vikram Sharma</span>
-            <span className="mt-0.5 block text-xs font-normal text-muted-foreground">vikram@sharmamobile.in</span>
+            <span className="block text-sm font-semibold">{displayName}</span>
+            <span className="mt-0.5 block text-xs font-normal text-muted-foreground">{displayEmail}</span>
           </DropdownMenu.Label>
           <DropdownMenu.Separator className="my-1 h-px bg-border" />
           <DropdownMenu.Item asChild className={dropdownItemClass}>
-            <Link href="/settings/profile"><UserRound className="size-4" aria-hidden="true" />Profile</Link>
+            <Link href="/settings/profile">
+              <UserRound className="size-4" aria-hidden="true" />
+              Profile
+            </Link>
           </DropdownMenu.Item>
           <DropdownMenu.Item asChild className={dropdownItemClass}>
-            <Link href="/subscription"><CreditCard className="size-4" aria-hidden="true" />Plan and billing</Link>
+            <Link href="/subscription">
+              <CreditCard className="size-4" aria-hidden="true" />
+              Plan and billing
+            </Link>
           </DropdownMenu.Item>
           <DropdownMenu.Item asChild className={dropdownItemClass}>
-            <Link href="/help"><CircleHelp className="size-4" aria-hidden="true" />Help centre</Link>
+            <Link href="/help">
+              <CircleHelp className="size-4" aria-hidden="true" />
+              Help centre
+            </Link>
           </DropdownMenu.Item>
           <DropdownMenu.Separator className="my-1 h-px bg-border" />
-          <DropdownMenu.Item asChild className={`${dropdownItemClass} text-danger data-[highlighted]:bg-danger-soft data-[highlighted]:text-danger`}>
-            <Link href="/login"><LogOut className="size-4" aria-hidden="true" />Sign out</Link>
+          <DropdownMenu.Item
+            onSelect={() => logout()}
+            className={`${dropdownItemClass} text-danger data-[highlighted]:bg-danger-soft data-[highlighted]:text-danger`}
+          >
+            <LogOut className="size-4" aria-hidden="true" />
+            Sign out
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

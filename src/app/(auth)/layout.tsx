@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
 
 import { AuthSidePanel } from "@/components/auth/auth-side-panel";
 import { Logo } from "@/components/logo";
@@ -12,7 +13,9 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default async function AuthLayout({ children }: { children: React.ReactNode }) {
+  await connection();
+
   return (
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-[minmax(25rem,0.9fr)_minmax(32rem,1.1fr)]">
       <AuthSidePanel />
@@ -36,4 +39,3 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     </div>
   );
 }
-
